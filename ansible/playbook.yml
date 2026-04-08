@@ -1,0 +1,40 @@
+---
+- hosts: vps
+  become: yes
+  vars_files:
+    - group_vars/all
+    - group_vars/vault
+
+  tasks:
+    - name: Pull latest Laravel code from GitHub
+      git:
+        repo: "{{ app_repo }}"
+        dest: "{{ app_dir }}"
+        force: yes
+
+    - name: Set correct permissions
+      file:
+        path: "{{ app_dir }}"
+        owner: www-data
+        group: www-data
+        recurse: yes
+
+    - name: Copy .env file
+      template:
+        src: templates/.env.j2
+        dest: "{{ app_dir }}/.env"
+
+    - name: Run composer install
+      composer:
+        command: install
+        working_dir: "{{ app_dir }}"
+
+    - name: Run migrations
+      command: php artisan migrate --force
+      args:
+        chdir: "{{ app_dir }}"
+
+    - name: Restart Nginx
+      service:
+        name: nginx
+        state: restarted
