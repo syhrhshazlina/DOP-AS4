@@ -25,9 +25,11 @@
         dest: "{{ app_dir }}/.env"
 
     - name: Run composer install
-      composer:
-        command: install
-        working_dir: "{{ app_dir }}"
+      command: composer install --no-interaction --no-dev --optimize-autoloader
+      args:
+        chdir: "{{ app_dir }}"
+      environment:
+        COMPOSER_ALLOW_SUPERUSER: "1"
 
     - name: Run migrations
       command: php artisan migrate --force
